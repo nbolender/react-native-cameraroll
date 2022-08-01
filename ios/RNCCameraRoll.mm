@@ -106,11 +106,11 @@ typedef void (^PhotosAuthorizedBlock)(bool isLimited);
 static void requestPhotoLibraryAccess(RCTPromiseRejectBlock reject, PhotosAuthorizedBlock authorizedBlock, bool requestAddOnly) {
   PHAuthorizationStatus authStatus;
   if (@available(iOS 14, *)) {
-      if (requestAddOnly) {
+//       if (requestAddOnly) {
         authStatus = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelAddOnly];
-      } else {
-        authStatus = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
-      }
+//       } else {
+//         authStatus = [PHPhotoLibrary authorizationStatusForAccessLevel:PHAccessLevelReadWrite];
+//       }
   } else {
     authStatus = [PHPhotoLibrary authorizationStatus];
   }
@@ -125,15 +125,16 @@ static void requestPhotoLibraryAccess(RCTPromiseRejectBlock reject, PhotosAuthor
     authorizedBlock(true);
   } else if (authStatus == PHAuthorizationStatusNotDetermined) {
       if (@available(iOS 14, *)) {
-          if (requestAddOnly) {
+// <<<<<<< HEAD:ios/RNCCameraRoll.mm
+//           if (requestAddOnly) {
               [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelAddOnly handler:^(PHAuthorizationStatus status) {
-                  requestPhotoLibraryAccess(reject, authorizedBlock, requestAddOnly);
+                  requestPhotoLibraryAccess(reject, authorizedBlock, true);
               }];
-          } else {
-              [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite handler:^(PHAuthorizationStatus status) {
-                  requestPhotoLibraryAccess(reject, authorizedBlock, requestAddOnly);
-              }];
-          }
+//           } else {
+//               [PHPhotoLibrary requestAuthorizationForAccessLevel:PHAccessLevelReadWrite handler:^(PHAuthorizationStatus status) {
+//                   requestPhotoLibraryAccess(reject, authorizedBlock, requestAddOnly);
+//               }];
+//           }
       } else {
           [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
               requestPhotoLibraryAccess(reject, authorizedBlock, requestAddOnly);
@@ -178,14 +179,14 @@ RCT_EXPORT_METHOD(saveToCameraRoll:(NSURLRequest *)request
         if ([[inputURI.pathExtension lowercaseString] isEqualToString:@"webp"]) {
           UIImage *webpImage;
 
-          #ifdef SD_WEB_IMAGE_WEBP_CODER_AVAILABLE 
+          #ifdef SD_WEB_IMAGE_WEBP_CODER_AVAILABLE
             webpImage = [[SDImageWebPCoder sharedCoder] decodedImageWithData:data options:nil];
           #else
             if (@available(iOS 14, *)) {
               webpImage = [UIImage imageWithData:data];
             }
           #endif
-          
+
           if (webpImage) {
             data = UIImageJPEGRepresentation(webpImage, 1.0);
           }
@@ -701,15 +702,15 @@ RCT_EXPORT_METHOD(getPhotoThumbnail:(NSString *)internalId
     checkPhotoLibraryConfig();
 
     BOOL const allowNetworkAccess = options[@"allowNetworkAccess"] == nil ? NO : [RCTConvert BOOL:options[@"allowNetworkAccess"]];
-    
+
     NSDictionary *const targetSize = [RCTConvert NSDictionary:options[@"targetSize"]];
     CGFloat const targetHeight = targetSize[@"height"] == nil ? 400 : [RCTConvert CGFloat:targetSize[@"height"]];
     CGFloat const targetWidth = targetSize[@"width"] == nil ? 400 : [RCTConvert CGFloat:targetSize[@"width"]];
-    
+
     CGFloat quality = options[@"quality"] == nil ? 1.0 : [RCTConvert CGFloat:options[@"quality"]];
 
     requestPhotoLibraryAccess(reject, ^(bool isLimited){
-    
+
         PHFetchResult<PHAsset *> *fetchResult;
         PHAsset *asset;
         NSString *mediaIdentifier = internalId;
@@ -729,7 +730,7 @@ RCT_EXPORT_METHOD(getPhotoThumbnail:(NSString *)internalId
             requestOptions.networkAccessAllowed = allowNetworkAccess;
             requestOptions.version = PHImageRequestOptionsVersionUnadjusted;
             requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
-            
+
             CGSize const thumbnailSize = CGSizeMake(targetWidth, targetHeight);
             [[PHImageManager defaultManager] requestImageForAsset:asset
                                                        targetSize:thumbnailSize
@@ -741,9 +742,9 @@ RCT_EXPORT_METHOD(getPhotoThumbnail:(NSString *)internalId
                 if (error) {
                     reject(@"Error while getting thumbnail image",@"Error while getting thumbnail image",error);
                 }
-                
+
                 NSString *thumbnailBase64 = [UIImageJPEGRepresentation(image, quality) base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithLineFeed];
-                
+
                 resolve(@{
                     @"thumbnailBase64": thumbnailBase64
                 });
@@ -759,7 +760,7 @@ RCT_EXPORT_METHOD(getPhotoThumbnail:(NSString *)internalId
 
 NSString *subTypeLabelForCollection(PHAssetCollection *assetCollection) {
     PHAssetCollectionSubtype subtype = assetCollection.assetCollectionSubtype;
-  
+
     switch (subtype) {
         case PHAssetCollectionSubtypeAlbumRegular:
             return @"AlbumRegular";
@@ -774,7 +775,7 @@ NSString *subTypeLabelForCollection(PHAssetCollection *assetCollection) {
       case PHAssetCollectionSubtypeAlbumMyPhotoStream:
           return @"AlbumMyPhotoStream";
       case PHAssetCollectionSubtypeAlbumCloudShared:
-          return @"AlbumCloudShared";      
+          return @"AlbumCloudShared";
       default:
           return @"Unknown";
   }
@@ -783,7 +784,7 @@ NSString *subTypeLabelForCollection(PHAssetCollection *assetCollection) {
 - (NSArray<NSString *> *) mediaSubTypeLabelsForAsset:(PHAsset *)asset {
     PHAssetMediaSubtype subtype = asset.mediaSubtypes;
     NSMutableArray<NSString*> *mediaSubTypeLabels = [NSMutableArray array];
-    
+
     if (subtype & PHAssetMediaSubtypePhotoPanorama) {
         [mediaSubTypeLabels addObject:@"PhotoPanorama"];
     }
